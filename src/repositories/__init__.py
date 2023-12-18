@@ -1,0 +1,3 @@
+from src.repositories.welder_repository import WelderRepository
+from src.repositories.welder_certification_repository import WelderCertificationRepository
+from src.repositories.welder_ndt_repository import WelderNDTRepository

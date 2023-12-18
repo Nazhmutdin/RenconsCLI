@@ -1,0 +1,8 @@
+.env
+.test.env
+cmd.bat
+venv
+static
+__pycache__/
+.vscode
+.pytest_cache
