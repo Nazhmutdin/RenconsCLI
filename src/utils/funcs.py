@@ -1,4 +1,5 @@
 import typing
+from passlib.context import CryptContext
 from datetime import date
 from dateutil.parser import parser
 
@@ -16,3 +17,14 @@ def str_to_date(date_string: str, dayfirst: bool = True) -> date | None:
 
     except:
         return None
+    
+
+crypt_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def hash_password(password: str) -> str:
+    return crypt_ctx.hash(password)
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    return crypt_ctx.verify(password, hashed_password)

@@ -51,6 +51,7 @@ class WelderDataExtractor:
             additional_page_data = self._extract_data_from_welder_certification_page(
                 additional_pages[page_index]
             )
+            # if not main_page_data[page_index].get("additional_page_data")
 
             data = main_page_data[page_index] | additional_page_data
 
@@ -71,7 +72,10 @@ class WelderDataExtractor:
         for tr in trs:
             row_tree: html.HtmlElement = html.fromstring(html.tostring(tr))
             name = row_tree.xpath("//tr[@bgcolor]/td[1]/text()")[0].strip()
-            kleymo = row_tree.xpath("//tr[@bgcolor]/td[2]/span/text()")[0].strip()
+            try:
+                kleymo = row_tree.xpath("//tr[@bgcolor]/td[2]/span/text()")[0].strip()
+            except:
+                kleymo = None
             company = row_tree.xpath("//tr[@bgcolor]/td[3]/text()")[0].strip()
             job_title = row_tree.xpath("//tr[@bgcolor]/td[4]/text()")[0].strip()
             certification_number = row_tree.xpath("//tr[@bgcolor]/td[5]/text()")[0].strip()
