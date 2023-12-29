@@ -1,14 +1,14 @@
 from time import sleep
+from typing import TypedDict, Unpack
+from datetime import datetime
 
 from click import Option, Command, echo
 
-from src.commands.db_commands.add_welder_ndts_service import AddWelderNDTsService
-from src.commands.db_commands.load_welder_ndts_service import LoadWelderNDTsService
-from src.repositories import WelderRepository, WelderCertificationRepository
-from src.shemas import WelderShema
-from src.utils.funcs import load_json
+from src.commands.db_commands.welder_ndt_table_service import AddWelderNDTsService
+from src.repositories import WelderRepository, WelderCertificationRepository, UserRepository
+from src.shemas import WelderShema, UserShema
+from src.utils.funcs import load_json, hash_password
 from src.utils.progress_bar import init_progress_bar
-from src.commands.db_commands.user_table_service import add_user, update_user
 from settings import Settings
 
 
@@ -87,23 +87,19 @@ class UpdateWeldersCommand(Command):
         sleep(.1)
 
 
-class DownloadWelderNDTsCommand(Command):
-    def __init__(self) -> None:
-
-        name = "download-welder-ndts"
-
-        file_name_option = Option(["--file-name"], type=str, help="support .json, .xlsx formats")
-        welding_date_from_option = Option(["--welding-date-from"], type=str, default="-")
-        welding_date_before_option = Option(["--welding-date-before"], type=str, default="-")
-
-        super().__init__(name=name, params=[file_name_option, welding_date_from_option, welding_date_before_option], callback=self.execute)
+"""
+================================================================
+User Commands
+================================================================
+"""
 
 
-    def execute(self, file_name: str, welding_date_from: str, welding_date_before: str) -> None:
-        try:
-            LoadWelderNDTsService().load_ndts(file_name=file_name, welding_date_from=welding_date_from, welding_date_before=welding_date_before)
-        except ValueError:
-            echo("Invalid file format")
+class UserDict(TypedDict):
+    name: str
+    login: str
+    password: str
+    email: str | None
+    is_superuser: bool
 
 
 class AddUserCommand(Command):
@@ -138,23 +134,21 @@ class AddUserCommand(Command):
     
     def execute(
         self, 
-        name: str | None, 
-        login: str | None,
-        password: str | None,
-        email: str | None,
-        is_superuser: bool | None
+        **kwargs: Unpack[UserDict]
     ) -> None:
-        if not self._check_input_data(name, login, password):
+        if not self._check_input_data(kwargs["name"], kwargs["login"], kwargs["password"]):
             echo("name, login and password are required!")
             return
+        
+        repo = UserRepository()
 
-        add_user(
-            name=name,
-            login=login,
-            password=password,
-            email=email,
-            is_superuser=is_superuser
-        )
+        kwargs["hashed_password"] = hash_password(kwargs["password"])
+        user = UserShema.model_validate(kwargs, from_attributes=True)
+
+        user.set_sign_date()
+        user.set_login_date()
+        user.set_update_date()
+        repo.add(user)
         echo("User successfully added!")
 
 
@@ -178,21 +172,31 @@ class UpdateUserCommand(Command):
     
     def execute(
         self, 
-        name: str | None, 
-        login: str | None,
-        password: str | None,
-        email: str | None,
-        is_superuser: bool | None
+        **kwargs: Unpack[UserDict]
     ) -> None:
-        if not login:
+        if not kwargs["login"]:
             echo("login is required!")
             return
+        
+        repo = UserRepository()
 
-        update_user(
-            login=login,
-            name=name,
-            password=password,
-            email=email,
-            is_superuser=is_superuser
-        )
+        kwargs = {key: value for key, value in kwargs.items() if value != None}
+
+        kwargs["update_date"] = datetime.utcnow()
+        repo.update(kwargs["login"], **kwargs)
         echo("User successfully updated!")
+
+
+class DeleteUserCommand(Command):
+    def __init__(self) -> None:
+
+        name = "delete-user"
+
+        login_option = Option(["--login", "-l"], type=str)
+
+        super().__init__(name=name, params=[login_option], callback=self.execute)
+
+    
+    def execute(self, login: str) -> None: 
+        UserRepository().delete(login)
+        echo("User successfully deleted!")
