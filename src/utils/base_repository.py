@@ -6,7 +6,6 @@ from sqlalchemy.sql.schema import Column
 
 from src.db_engine import BaseModel
 from src.utils.db_objects import (
-    DBResponse,
     DataBaseRequest
 )
 
@@ -36,7 +35,7 @@ class BaseRepository[Shema: BaseShema, Model: BaseModel]:
             return result
 
 
-    def get_many(self, request: DataBaseRequest) -> DBResponse[Shema]: ...
+    def get_many(self, request: DataBaseRequest) -> list[Shema]: ...
 
 
     def add(self, model: Shema) -> None:

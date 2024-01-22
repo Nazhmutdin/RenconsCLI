@@ -21,7 +21,6 @@ DB_URL = "postgresql+psycopg2://{0}:{1}@{2}:{3}/{4}".format(
 class Base(DeclarativeBase):
     __shema__: Shema = NotImplementedError
 
-
 engine = create_engine(DB_URL)
 
 Base.metadata.create_all(engine)

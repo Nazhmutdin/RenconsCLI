@@ -2,7 +2,6 @@ from sqlalchemy import Select, select, desc
 
 from src.models import WelderNDTModel, WelderCertificationModel, WelderModel
 from src.utils.db_objects import (
-    DBResponse,
     WelderNDTDataBaseRequest
 )
 from src.utils.base_repository import BaseRepository
@@ -14,7 +13,7 @@ class WelderNDTRepository(BaseRepository[WelderNDTShema, WelderNDTModel]):
     __tablemodel__ = WelderNDTModel
     __shema__ = WelderNDTShema
 
-    def get_many(self, request: WelderNDTDataBaseRequest | None = None) -> DBResponse[WelderNDTShema]:
+    def get_many(self, request: WelderNDTDataBaseRequest | None = None) -> list[WelderNDTShema]:
         with SQLalchemyUnitOfWork() as transaction:
 
             stmt = select(WelderNDTModel).order_by(desc(WelderNDTModel.welding_date))

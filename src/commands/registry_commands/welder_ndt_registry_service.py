@@ -175,7 +175,6 @@ class UpdateWelderNDTRegistryService:
             value.MPG_method_certification_date = MPG_method_certification_date
 
 
-
     def _collect_ndts(self) -> list[WelderNDTShema]:
         repo = WelderNDTRepository()
 

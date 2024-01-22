@@ -157,11 +157,11 @@ class UpdateUserCommand(Command):
 
         name = "update-user"
 
-        name_option = Option(["--name", "-n"], type=str, default=None)
-        login_option = Option(["--login", "-l"], type=str, default=None)
-        password_option = Option(["--password", "-p"], type=str, default=None)
-        email_option = Option(["--email", "-e"], type=str, default=None)
-        is_superuser_option = Option(["--is_superuser", "-su"], type=bool, default=False)
+        name_option = Option(["--name", "-n"], type=str)
+        login_option = Option(["--login", "-l"], type=str)
+        password_option = Option(["--password", "-p"], type=str)
+        email_option = Option(["--email", "-e"], type=str)
+        is_superuser_option = Option(["--is_superuser", "-su"], type=bool)
 
         super().__init__(
             name=name, 
@@ -177,10 +177,14 @@ class UpdateUserCommand(Command):
         if not kwargs["login"]:
             echo("login is required!")
             return
-        
+
         repo = UserRepository()
 
         kwargs = {key: value for key, value in kwargs.items() if value != None}
+
+        if kwargs.get("password"):
+            password = kwargs.pop("password")
+            kwargs["hashed_password"] = hash_password(password)
 
         kwargs["update_date"] = datetime.utcnow()
         repo.update(kwargs["login"], **kwargs)

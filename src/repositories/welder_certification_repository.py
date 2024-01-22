@@ -2,7 +2,6 @@ from sqlalchemy import BinaryExpression, select, and_, or_
 
 from src.models import WelderCertificationModel
 from src.utils.db_objects import (
-    DBResponse,
     WelderCertificationDataBaseRequest
 )
 from src.utils.base_repository import BaseRepository
@@ -16,7 +15,7 @@ class WelderCertificationRepository(BaseRepository[WelderCertificationShema, Wel
     __tablemodel__ = WelderCertificationModel
     __shema__ = WelderCertificationShema
 
-    def get_many(self, request: WelderCertificationDataBaseRequest) -> DBResponse[WelderCertificationShema]:
+    def get_many(self, request: WelderCertificationDataBaseRequest) -> list[WelderCertificationShema]:
         with SQLalchemyUnitOfWork() as transaction:
 
             or_expressions, and_expressions = self._get_many_filtrating(request)
@@ -45,10 +44,13 @@ class WelderCertificationRepository(BaseRepository[WelderCertificationShema, Wel
         and_expressions: list[BinaryExpression] = []
 
         if request.ids:
-            and_expressions.append(WelderCertificationModel.certification_id.in_(request.ids))
+            or_expressions.append(WelderCertificationModel.certification_id.in_(request.ids))
+
+        if request.kleymos:
+            or_expressions.append(WelderCertificationModel.kleymo.in_(request.kleymos))
         
         if request.certification_numbers:
-            and_expressions.append(WelderCertificationModel.certification_number.in_(request.certification_numbers))
+            or_expressions.append(WelderCertificationModel.certification_number.in_(request.certification_numbers))
 
         if request.certification_date_before:
             and_expressions.append(WelderCertificationModel.certification_date <= request.certification_date_before)

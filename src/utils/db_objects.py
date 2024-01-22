@@ -44,8 +44,3 @@ class WelderNDTDataBaseRequest(DataBaseRequest):
     projects: list[str] | None = Field(default=None)
     welding_date_from: date | None = Field(default=None)
     welding_date_before: date | None = Field(default=None)
-
-
-class DBResponse[Model:BaseShema](BaseModel):
-    count: int
-    result: list[Model]

@@ -80,4 +80,7 @@ class AddWelderNDTsService:
         repo = WelderNDTRepository()
         
         for ndt in self._read(folder, file):
-            repo.add(ndt)
+            try:
+                repo.add(ndt)
+            except:
+                echo("Invalid data")

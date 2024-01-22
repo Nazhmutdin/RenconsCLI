@@ -3,7 +3,6 @@ from sqlalchemy.orm import subqueryload
 
 from src.models import WelderCertificationModel, WelderModel
 from src.utils.db_objects import (
-    DBResponse,
     WelderDataBaseRequest
 )
 from src.utils.UoW import SQLalchemyUnitOfWork

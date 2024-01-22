@@ -65,7 +65,7 @@ class ExcelService:
     @staticmethod
     def append_rows_to_worksheet(rows: list[list[Cell]], ws: Worksheet) -> None:
         for row in rows:
-            ExcelService.append_row_to_worksheet(row)
+            ExcelService.append_row_to_worksheet(row, ws=ws)
 
     
     @staticmethod

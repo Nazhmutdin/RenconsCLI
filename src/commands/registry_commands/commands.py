@@ -1,6 +1,6 @@
 from click import Option, Command
 
-from src.commands.registry_commands.update_welder_ndt_registry_service import UpdateWelderNDTRegistryService
+from src.commands.registry_commands.welder_ndt_registry_service import UpdateWelderNDTRegistryService
 
 
 class UpdateWelderNDTRegistryCommand(Command):
