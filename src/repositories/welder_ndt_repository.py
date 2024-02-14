@@ -1,6 +1,7 @@
 from sqlalchemy import Select, select, desc
+from sqlalchemy.orm import subqueryload
 
-from src.models import WelderNDTModel, WelderCertificationModel, WelderModel
+from src.models import WelderNDTModel, WelderModel
 from src.utils.db_objects import (
     WelderNDTDataBaseRequest
 )
@@ -18,15 +19,22 @@ class WelderNDTRepository(BaseRepository[WelderNDTShema, WelderNDTModel]):
 
             stmt = select(WelderNDTModel).order_by(desc(WelderNDTModel.welding_date))
 
-            if request != None:
-
-                stmt = self._set_filters(stmt, request)
+            if request == None:
                 return [WelderNDTShema.model_validate(el) for el in transaction.connection.execute(stmt).mappings().all()]
 
+            stmt = self._set_filters(stmt, request)
             return [WelderNDTShema.model_validate(el) for el in transaction.connection.execute(stmt).mappings().all()]
 
 
+
     def _set_filters(self, stmt: Select, request: WelderNDTDataBaseRequest) -> Select:
+
+        if request.limit:
+            stmt = stmt.limit(request.limit)
+
+        if request.offset:
+            stmt = stmt.offset(request.offset)
+
         if request.kleymos:
             stmt = stmt.filter(WelderNDTModel.kleymo.in_(request.kleymos))
 
@@ -40,10 +48,10 @@ class WelderNDTRepository(BaseRepository[WelderNDTShema, WelderNDTModel]):
             stmt = stmt.filter(WelderNDTModel.project.in_(request.projects))
 
         if request.welding_date_before:
-            stmt = stmt.filter(WelderNDTModel.latest_welding_date <= request.welding_date_before)
+            stmt = stmt.filter(WelderNDTModel.welding_date <= request.welding_date_before)
 
         if request.welding_date_from:
-            stmt = stmt.filter(WelderNDTModel.latest_welding_date >= request.welding_date_from)
+            stmt = stmt.filter(WelderNDTModel.welding_date >= request.welding_date_from)
 
         if request.names:
             stmt = stmt.filter(WelderModel.name.in_(request.names))

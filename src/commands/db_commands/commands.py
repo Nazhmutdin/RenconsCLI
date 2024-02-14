@@ -1,6 +1,6 @@
 from time import sleep
 from typing import TypedDict, Unpack
-from datetime import datetime
+from datetime import datetime, date
 
 from click import Option, Command, echo
 
@@ -9,23 +9,26 @@ from src.repositories import WelderRepository, WelderCertificationRepository, Us
 from src.shemas import WelderShema, UserShema
 from src.utils.funcs import load_json, hash_password
 from src.utils.progress_bar import init_progress_bar
+from passlib.hash import sha256_crypt
 from settings import Settings
 
 
-class AddWelderNDTsCommand(Command):
-    def __init__(self) -> None:
 
-        name = "add-welder-ndts"
-
-        folder_option = Option(["--folder"], type=str)
-        file_option = Option(["--file"], type=str, default="*")
-
-
-        super().__init__(name=name, params=[folder_option, file_option], callback=self.execute)
+"""
+====================================================================================
+welder commands
+====================================================================================
+"""
 
 
-    def execute(self, folder: str, file: str) -> None:
-        AddWelderNDTsService().add_ndts(folder, file)
+class WelderDict(TypedDict):
+    kleymo: str
+    name: str
+    birthday: date
+    passport_id: str
+    sicil_number: str
+    nation: str
+    status: int
 
 
 class AddWeldersCommand(Command):
@@ -41,16 +44,12 @@ class AddWeldersCommand(Command):
         welders = [WelderShema.model_validate(welder) for welder in load_json(Settings.WELDERS_DATA_JSON())]
 
         welder_repo = WelderRepository()
-        welder_cert_repo = WelderCertificationRepository()
         progress = init_progress_bar("[blue]Adding...")
         progress.start()
         task = progress.add_task("[blue]Adding...", total=len(welders))
 
         for welder in welders:
             welder_repo.add(welder)
-
-            for certification in welder.certifications:
-                welder_cert_repo.add(certification)
 
             progress.update(task, advance=1)
         
@@ -62,8 +61,10 @@ class UpdateWeldersCommand(Command):
 
         name = "update-welders"
 
-        super().__init__(name=name, callback=self.execute)
-
+        super().__init__(
+            name=name,
+            callback=self.execute
+        )
 
     def execute(self) -> None:
 
@@ -88,9 +89,65 @@ class UpdateWeldersCommand(Command):
 
 
 """
-================================================================
-User Commands
-================================================================
+====================================================================================
+welder certification commands
+====================================================================================
+"""
+
+
+class AddWelderCertificationsCommand(Command):
+    def __init__(self) -> None:
+
+        name = "add-welder-certification"
+
+        super().__init__(name=name, callback=self.execute)
+
+
+    def execute(self) -> None:
+
+        welders = [WelderShema.model_validate(welder) for welder in load_json(Settings.WELDERS_DATA_JSON())]
+
+        repo = WelderCertificationRepository()
+        progress = init_progress_bar("[blue]Adding...")
+        progress.start()
+        task = progress.add_task("[blue]Adding...", total=len(welders))
+
+        for welder in welders:
+            for certification in welder.certifications:
+                repo.add(certification)
+
+            progress.update(task, advance=1)
+        
+        sleep(.1)
+
+
+"""
+====================================================================================
+welder ndt commands
+====================================================================================
+"""
+
+
+class AddWelderNDTsCommand(Command):
+    def __init__(self) -> None:
+
+        name = "add-welder-ndts"
+
+        folder_option = Option(["--folder"], type=str)
+        file_option = Option(["--file"], type=str, default="*")
+
+
+        super().__init__(name=name, params=[folder_option, file_option], callback=self.execute)
+
+
+    def execute(self, folder: str, file: str) -> None:
+        AddWelderNDTsService().add_ndts(folder, file)
+
+
+"""
+====================================================================================
+user commands
+====================================================================================
 """
 
 
@@ -99,6 +156,7 @@ class UserDict(TypedDict):
     login: str
     password: str
     email: str | None
+    is_active: bool
     is_superuser: bool
 
 
@@ -131,7 +189,7 @@ class AddUserCommand(Command):
         
         return False
 
-    
+
     def execute(
         self, 
         **kwargs: Unpack[UserDict]
@@ -145,9 +203,9 @@ class AddUserCommand(Command):
         kwargs["hashed_password"] = hash_password(kwargs["password"])
         user = UserShema.model_validate(kwargs, from_attributes=True)
 
-        user.set_sign_date()
-        user.set_login_date()
-        user.set_update_date()
+        user.sign_date = datetime.utcnow()
+        user.login_date = datetime.utcnow()
+        user.update_date = datetime.utcnow()
         repo.add(user)
         echo("User successfully added!")
 
@@ -169,7 +227,7 @@ class UpdateUserCommand(Command):
             callback=self.execute
         )
 
-    
+
     def execute(
         self, 
         **kwargs: Unpack[UserDict]

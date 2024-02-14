@@ -8,4 +8,4 @@ from src.commands.db_commands.commands import (
     DeleteUserCommand,
     UpdateUserCommand
 )
-from src.commands.registry_commands.commands import UpdateWelderNDTRegistryCommand
+from src.commands.registry_commands import UpdateWelderNDTRegistryCommand

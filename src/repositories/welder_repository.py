@@ -23,7 +23,7 @@ class WelderRepository(BaseRepository[WelderModel, WelderModel]):
                 WelderCertificationModel
             ).options(
                 subqueryload(WelderModel.certifications)
-            )
+            ).distinct()
 
             if request != None:
                 or_expressions, and_expressions = self._get_many_filtrating(request)

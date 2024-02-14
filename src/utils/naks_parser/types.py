@@ -1,7 +1,22 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+
+class NaksFilters(BaseModel): ...
+
+
+class PersonalNaksFilters(NaksFilters):
+    search_values: Optional[list[str]] = Field(default=None)
+    certification_date_from: Optional[date] = Field(default=None)
+    certification_date_before: Optional[date] = Field(default=None)
+    expiration_date_from: Optional[date] = Field(default=None)
+    expiration_date_before: Optional[date] = Field(default=None)
+    renewal_date_from: Optional[date] = Field(default=None)
+    renewal_date_before: Optional[date] = Field(default=None)
+    methods: Optional[list[str]] = Field(default=None)
+    gtd: Optional[list[str]] = Field(default=None)
 
 
 class WelderData(BaseModel):

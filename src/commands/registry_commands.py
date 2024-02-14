@@ -1,15 +1,15 @@
 from click import Option, Command
 
-from src.commands.registry_commands.welder_ndt_registry_service import UpdateWelderNDTRegistryService
+from src.services import WelderNDTRegistryService
 
 
 class UpdateWelderNDTRegistryCommand(Command):
     def __init__(self) -> None:
 
-        name = "update-welder-ndt-registry"
+        name = "update-ndt-registry"
 
         super().__init__(name=name, callback=self.execute)
 
 
     def execute(self) -> None:
-        UpdateWelderNDTRegistryService().update_registry()
+        WelderNDTRegistryService().update_registry()

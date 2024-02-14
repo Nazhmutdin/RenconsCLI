@@ -1,4 +1,5 @@
 from datetime import date
+from typing import NoReturn
 from os import listdir
 
 from click import echo
@@ -11,16 +12,15 @@ from src.utils.excel_service import ExcelService
 
 class AddWelderNDTsService:
 
-    def _get_file(self, folder: str) -> str | None:
+    def _get_file(self, folder: str) -> str | NoReturn:
         folder_path = f"{Settings.NDT_TABLES_DIR()}/{folder}"
         try:
             files = listdir(folder_path)
-            if len(files) == 0:
-                echo(f"{folder_path} is empty")
-                return None
         except:
-            echo("Invalid Path")
-            return None
+            raise ValueError(f"{folder_path} is invalid path")
+        
+        if len(files) == 0:
+            raise ValueError(f"{folder_path} is empty")
         
         return files[0]
     
@@ -33,7 +33,7 @@ class AddWelderNDTsService:
         return ExcelService.read_worksheet_by_row(wb.active, min_row=4, values_only=True)
     
 
-    def _row_ndt_data_to_shema(self, welder_ndt_row: list[str | int | float | date]) -> WelderNDTShema:
+    def _to_shema(self, welder_ndt_row: list[str | int | float | date]) -> WelderNDTShema:
         return WelderNDTShema(
             kleymo=welder_ndt_row[4],
             comp=welder_ndt_row[8],
@@ -68,12 +68,17 @@ class AddWelderNDTsService:
     def _read(self, folder: str, file: str) -> list[WelderNDTShema] | None:
         if file == "*":
             file = self._get_file(folder)
-
-            if not file:
-                return None
             
         data = self._read_ndt_report(folder, file)
-        return [self._row_ndt_data_to_shema(el) for el in data]
+        ndts = []
+
+        for el in data:
+            try:
+                ndts.append(self._to_shema(el))
+            except:
+                continue
+                
+        return ndts
 
  
     def add_ndts(self, folder: str, file: str) -> None:
@@ -82,5 +87,5 @@ class AddWelderNDTsService:
         for ndt in self._read(folder, file):
             try:
                 repo.add(ndt)
-            except:
-                echo("Invalid data")
+            except Exception as e:
+                echo(e.args)

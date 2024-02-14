@@ -1,5 +1,6 @@
 from typing import (
     TypeAlias,
+    TypedDict,
     Union,
     Any
 )
@@ -147,8 +148,7 @@ class ExcelService:
 
 
     @staticmethod
-    def style_like_body_rows(rows: list[list[Cell]]) -> list[list[Cell]]:
-        styled_rows = []
+    def style_like_body_rows(rows: list[list[Cell]]) -> None:
 
         for e, row in enumerate(rows):
             styled_row = []
@@ -157,10 +157,6 @@ class ExcelService:
                 styled_row.append(
                     ExcelService.set_body_cell_style(cell, e)
                 )
-            
-            styled_rows.append(styled_row)
-        
-        return styled_rows
 
         
     @staticmethod
