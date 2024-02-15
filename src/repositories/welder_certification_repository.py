@@ -1,4 +1,4 @@
-from sqlalchemy import BinaryExpression, select, and_, or_
+from sqlalchemy import BinaryExpression, select, and_, or_, desc
 
 from src.models import WelderCertificationModel
 from src.utils.db_objects import (
@@ -15,31 +15,23 @@ class WelderCertificationRepository(BaseRepository[WelderCertificationShema, Wel
     __tablemodel__ = WelderCertificationModel
     __shema__ = WelderCertificationShema
 
-    def get_many(self, request: WelderCertificationDataBaseRequest) -> list[WelderCertificationShema]:
+    def get_many(self, request: WelderCertificationDataBaseRequest | None = None) -> list[WelderCertificationShema]:
         with SQLalchemyUnitOfWork() as transaction:
 
-            or_expressions, and_expressions = self._get_many_filtrating(request)
+            stmt = select(WelderCertificationModel).order_by(desc(WelderCertificationModel.certification_date))
 
-            stmt = select(WelderCertificationModel).filter(
-                and_(
+            if request != None:
+                or_expressions, and_expressions = self._get_expressions(request)
+
+                stmt.filter(
                     or_(*or_expressions),
-                     *and_expressions
-                )
-            )
+                    and_(*and_expressions)
+                ).distinct()
 
-            if request.limit:
-                stmt = stmt.limit(request.limit)
-
-            if request.offset:
-                stmt = stmt.offset(request.offset)
-
-            res = transaction.connection.execute(stmt).mappings().all()
-            result = [WelderCertificationShema.model_validate(certification) for certification in res]
-
-        return result
+            return [WelderCertificationShema.model_validate(el) for el in transaction.connection.execute(stmt).mappings().all()]
 
 
-    def _get_many_filtrating(self, request: WelderCertificationDataBaseRequest) -> tuple[list[BinaryExpression], list[BinaryExpression]]:
+    def _get_expressions(self, request: WelderCertificationDataBaseRequest) -> tuple[list[BinaryExpression], list[BinaryExpression]]:
         or_expressions: list[BinaryExpression] = []
         and_expressions: list[BinaryExpression] = []
 

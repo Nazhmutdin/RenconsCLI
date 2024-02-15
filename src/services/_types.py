@@ -3,8 +3,6 @@ import typing as t
 
 from pydantic import BaseModel, Field
 
-from src.shemas import WelderNDTShema, WelderShema
-
 
 class WelderMethodsData(BaseModel):
     RD_method_certification: str | None = Field(default="-")

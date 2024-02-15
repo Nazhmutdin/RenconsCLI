@@ -46,7 +46,7 @@ class WelderCertificationModel(Base):
     insert: Mapped[str | None] = Column(String(), nullable=True)
     certification_type: Mapped[str | None] = Column(String(), nullable=True)
     company: Mapped[str | None] = Column(String(), nullable=True)
-    gtd: Mapped[list[str]] | None = Column(ARRAY(String), nullable=True)
+    gtd: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)
     method: Mapped[str] = Column(String(), nullable=True)
     details_type: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)
     joint_type: Mapped[list[str] | None] = Column(ARRAY(String), nullable=True)

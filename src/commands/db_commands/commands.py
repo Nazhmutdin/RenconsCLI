@@ -1,17 +1,27 @@
-from time import sleep
-from typing import TypedDict, Unpack
-from datetime import datetime, date
+import typing as t
+from datetime import datetime
+from pathlib import Path
 
 from click import Option, Command, echo
 
 from src.commands.db_commands.welder_ndt_table_service import AddWelderNDTsService
-from src.repositories import WelderRepository, WelderCertificationRepository, UserRepository
-from src.shemas import WelderShema, UserShema
+from src.services import WelderDataBaseService, WelderCertificationDataBaseService
+from src.repositories import UserRepository
+from src.shemas import UserShema
 from src.utils.funcs import load_json, hash_password
-from src.utils.progress_bar import init_progress_bar
-from passlib.hash import sha256_crypt
+from src._types import UserData
 from settings import Settings
 
+
+__all__ = [
+    "AddWeldersCommand",
+    "UpdateWeldersCommand",
+    "AddWelderCertificationsCommand",
+    "AddWelderNDTsCommand",
+    "AddUserCommand",
+    "UpdateUserCommand",
+    "DeleteUserCommand",
+]
 
 
 """
@@ -21,71 +31,42 @@ welder commands
 """
 
 
-class WelderDict(TypedDict):
-    kleymo: str
-    name: str
-    birthday: date
-    passport_id: str
-    sicil_number: str
-    nation: str
-    status: int
-
-
 class AddWeldersCommand(Command):
     def __init__(self) -> None:
 
         name = "add-welders"
+        path_option = Option(["--path"], type=t.Union[str, Path], default=Settings.WELDERS_DATA_JSON())
 
-        super().__init__(name=name, callback=self.execute)
+        super().__init__(name=name, params=[path_option], callback=self.execute)
 
 
-    def execute(self) -> None:
-
-        welders = [WelderShema.model_validate(welder) for welder in load_json(Settings.WELDERS_DATA_JSON())]
-
-        welder_repo = WelderRepository()
-        progress = init_progress_bar("[blue]Adding...")
-        progress.start()
-        task = progress.add_task("[blue]Adding...", total=len(welders))
+    def execute(self, path: str | Path) -> None:
+        welders = load_json(path)
+        service = WelderDataBaseService()
 
         for welder in welders:
-            welder_repo.add(welder)
-
-            progress.update(task, advance=1)
-        
-        sleep(.1)
+            service.add(**welder)
 
 
 class UpdateWeldersCommand(Command):
     def __init__(self) -> None:
 
         name = "update-welders"
+        path_option = Option(["--path"], type=t.Union[str, Path], default=Settings.WELDERS_DATA_JSON())
 
         super().__init__(
             name=name,
+            params=[path_option],
             callback=self.execute
         )
 
-    def execute(self) -> None:
+    def execute(self, path: str | Path) -> None:
 
-        welders = [WelderShema.model_validate(welder) for welder in load_json(Settings.WELDERS_DATA_JSON())]
-
-        welder_repo = WelderRepository()
-        welder_cert_repo = WelderCertificationRepository()
-
-        progress = init_progress_bar("[blue]Updating...")
-        progress.start()
-        task = progress.add_task("[blue]Updating...", total=len(welders))
+        welders = load_json(path)
+        service = WelderDataBaseService()
 
         for welder in welders:
-            welder_repo.update(welder)
-
-            for certification in welder.certifications:
-                welder_cert_repo.update(certification)
-
-            progress.update(task, advance=1)
-        
-        sleep(.1)
+            service.update(**welder)
 
 
 """
@@ -99,26 +80,22 @@ class AddWelderCertificationsCommand(Command):
     def __init__(self) -> None:
 
         name = "add-welder-certification"
+        path_option = Option(["--path"], type=t.Union[str, Path], default=Settings.WELDERS_DATA_JSON())
 
-        super().__init__(name=name, callback=self.execute)
+        super().__init__(
+            name=name,
+            params=[path_option],
+            callback=self.execute
+        )
 
 
-    def execute(self) -> None:
+    def execute(self, path: str | Path) -> None:
 
-        welders = [WelderShema.model_validate(welder) for welder in load_json(Settings.WELDERS_DATA_JSON())]
+        certifications = load_json(path)
+        service = WelderCertificationDataBaseService()
 
-        repo = WelderCertificationRepository()
-        progress = init_progress_bar("[blue]Adding...")
-        progress.start()
-        task = progress.add_task("[blue]Adding...", total=len(welders))
-
-        for welder in welders:
-            for certification in welder.certifications:
-                repo.add(certification)
-
-            progress.update(task, advance=1)
-        
-        sleep(.1)
+        for certification in certifications:
+            service.add(**certification)
 
 
 """
@@ -149,15 +126,6 @@ class AddWelderNDTsCommand(Command):
 user commands
 ====================================================================================
 """
-
-
-class UserDict(TypedDict):
-    name: str
-    login: str
-    password: str
-    email: str | None
-    is_active: bool
-    is_superuser: bool
 
 
 class AddUserCommand(Command):
@@ -192,7 +160,7 @@ class AddUserCommand(Command):
 
     def execute(
         self, 
-        **kwargs: Unpack[UserDict]
+        **kwargs: t.Unpack[UserData]
     ) -> None:
         if not self._check_input_data(kwargs["name"], kwargs["login"], kwargs["password"]):
             echo("name, login and password are required!")
@@ -230,7 +198,7 @@ class UpdateUserCommand(Command):
 
     def execute(
         self, 
-        **kwargs: Unpack[UserDict]
+        **kwargs: t.Unpack[UserData]
     ) -> None:
         if not kwargs["login"]:
             echo("login is required!")

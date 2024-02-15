@@ -1,5 +1,4 @@
 from sqlalchemy import BinaryExpression, select, and_, or_
-from sqlalchemy.orm import subqueryload
 
 from src.models import WelderCertificationModel, WelderModel
 from src.utils.db_objects import (
@@ -10,7 +9,7 @@ from src.utils.base_repository import BaseRepository
 from src.shemas import WelderShema
 
 
-class WelderRepository(BaseRepository[WelderModel, WelderModel]):
+class WelderRepository(BaseRepository[WelderShema, WelderModel]):
     __tablemodel__ = WelderModel
     __shema__ = WelderShema
 
@@ -21,8 +20,6 @@ class WelderRepository(BaseRepository[WelderModel, WelderModel]):
 
             stmt = select(WelderModel).join(
                 WelderCertificationModel
-            ).options(
-                subqueryload(WelderModel.certifications)
             ).distinct()
 
             if request != None:
@@ -39,8 +36,6 @@ class WelderRepository(BaseRepository[WelderModel, WelderModel]):
                 
                 if request.offset:
                     stmt = stmt.offset(request.offset)
-
-                return [WelderShema.model_validate(welder[0], from_attributes=True) for welder in transaction.session.execute(stmt).all()]
 
             return [WelderShema.model_validate(welder[0], from_attributes=True) for welder in transaction.session.execute(stmt).all()]
 
